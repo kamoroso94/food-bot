@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Food Bot Genetic Algorithm</title>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" href="style.css" />
+		<script src="foodbot.js"></script>
+	</head>
+
+	<body>
+		<header>
+			<div class="container">
+				<h1>Food Bot Genetic Algorithm</h1>
+			</div>
+		</header>
+		<div class="container">
+			<h2>Current Generation</h2>
+			<p>
+				<strong>Food Eaten:</strong>
+				<span id="eaten">0</span>
+			</p>
+			<canvas width="1024" height="768"></canvas>
+			<h2>Statistics</h2>
+			<p>
+				<strong>Previous Generation:</strong>
+				<span id="generation">N/A</span>
+			</p>
+			<p>
+				<strong>Best Fitness:</strong>
+				<span id="fitness">N/A</span>
+			</p>
+			<code id="food-bot">N/A</code>
+			<h2>Description</h2>
+			<p>This simulation runs a genetic algorithm to determine the best set of 256 instructions for eating as much food as possible.
+			There are 20 food bots that are initially generated with a completely random set of 256 instructions, and a volitility value which determines its rate of mutation during reproduction.
+			Each food bot has a lifespan of 512 cycles.
+			Each food bot also has a limited short term memory.
+			It can remember two values, in the order of which was recorded most recently.
+			It uses its sensor to find the closest food in its line of sight, forgetting its oldest memory in the process.
+			Each cycle, the food bots execute one instruction.
+			Refer to the next section for the definition of each instruction.
+			The fitness of each bot is determined after every bot has died either from old age (finished 256 instructions) or from a genetic defect (instruction to jump to the end of the program).
+			The fitness of each bot is equivalent to the proportion of food it's eaten to the total food eaten by that generation.
+			After the generation completes its life cycle, it's decendants are born.
+			Each new descendant is generated from two randomly selected parents.
+			Each parent is more likely to be selected if it has a higher fitness.
+			The mating cycle repeats until the number of decendants is equal to that of the previous generation.
+			After each new descendant is generated, there is a chance some of its genes may mutate.
+			In other words, some of its instructions are changed randomly.
+			The rate of mutation is dependant on the child's level of volitility.
+			Its volitility is determined by the weighted average of its parents', weighted by their fitness.
+			</p>
+			<h2>Instruction Definitions</h2>
+			<table>
+				<tr>
+					<th><span data-code="move">TURN_L</span></th>
+					<td><p>This rotates the food bot's orientation 90&deg; counterclockwise.</p></td>
+				</tr>
+				<tr><th><span data-code="move">TURN_R</span></th>
+					<td><p>This rotates the food bot's orientation 90&deg; clockwise.</p></td>
+				</tr>
+				<tr><th><span data-code="move">MOVE_F</span></th>
+					<td><p>This moves the food bot forward by one cell in the direction it's facing, looping around the edges of the grid if necessary.</p></td>
+				</tr>
+				<tr><th><span data-code="sensor">SENSE</span></th>
+					<td><p>This causes the food bot to forget its oldest memory and record a new one. It uses its sensor to determine the distance to the closest food in its direct line of sight.</p></td>
+				</tr>
+				<tr><th><span data-code="label">LABEL</span></th>
+					<td><p>This will create a point in the code for the bot to jump to.</p></td>
+				</tr>
+				<tr><th><span data-code="jump">PREV_LT</span></th>
+					<td><p>This jumps to the closest label to the left of this instruction if the newest memory is less than the oldest (in terms of distance to the food it sensed).</p></td>
+				</tr>
+				<tr><th><span data-code="jump">NEXT_LT</span></th>
+					<td><p>This jumps to the closest label to the right of this instruction if the newest memory is less than the oldest (in terms of distance to the food it sensed).</p></td>
+				</tr>
+			</table>
+		</div>
+		<footer>
+			<div class="container">
+				<p>Created in 2016 by Kyle Amoroso.  Inspired by the lovely videos on <a href="https://www.youtube.com/user/shiffman/">Coding Rainbow</a>.</p>
+			</div>
+		</footer>
+	</body>
+</html>
