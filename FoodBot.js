@@ -31,10 +31,10 @@ export default class FoodBot {
 	}
 
   draw(ctx, color) {
-		const botX = (this.pos.x + 0.15) * ctx.canvas.width / this.grid.width;
-		const botY = (this.pos.y + 0.15) * ctx.canvas.height / this.grid.height;
-		const botW = 0.7 * ctx.canvas.width / this.grid.width;
-		const botH = 0.7 * ctx.canvas.height / this.grid.height;
+		const botX = (this.pos.x + 0.15) * ctx.canvas.width / this.foodGrid.width;
+		const botY = (this.pos.y + 0.15) * ctx.canvas.height / this.foodGrid.height;
+		const botW = 0.7 * ctx.canvas.width / this.foodGrid.width;
+		const botH = 0.7 * ctx.canvas.height / this.foodGrid.height;
 
 		ctx.strokeStyle = color;
 		ctx.strokeRect(botX, botY, botW, botH);
