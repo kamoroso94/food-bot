@@ -16,19 +16,21 @@ function init() {
 	ctx = canvas.getContext('2d');
 
 	// set up download button
-	document.getElementById('download').addEventListener('click', function() {
+	document.getElementById('download').addEventListener('click', () => {
 		const commands = [];
-		document.getElementById('food-bot').querySelectorAll('[data-code]').forEach(function(span) {
-			commands.push(span.textContent.trim());
-		});
+		document.getElementById('food-bot')
+			.querySelectorAll('[data-code]')
+			.forEach((span) => {
+				commands.push(span.textContent.trim());
+			});
 
 		const aTag = document.createElement('a');
 		aTag.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(commands));
 		aTag.download = 'foodbot.json';
 		aTag.style.display = 'none';
-		document.body.appendChild(aTag);
+		document.body.append(aTag);
 		aTag.click();
-		document.body.removeChild(aTag);
+		aTag.remove();
 	});
 
 	//initiate values
@@ -72,22 +74,7 @@ function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	// draw the grid
-	ctx.strokeStyle = '#bfbfbf';
-	ctx.lineWidth = 1;
-	ctx.beginPath();
-
-	// horizontal lines
-	for(let x = 0; x < grid.width; x++) {
-		ctx.moveTo(x / grid.width * canvas.width, 0);
-		ctx.lineTo(x / grid.width * canvas.width, canvas.height);
-	}
-
-	// vertical lines
-	for(let y = 0; y < grid.width; y++) {
-		ctx.moveTo(0 , y / grid.height * canvas.height);
-		ctx.lineTo(canvas.width, y / grid.height * canvas.height);
-	}
-	ctx.stroke();
+	drawGrid(grid, ctx);
 
 	// draw the food
 	ctx.fillStyle = '#007fff';
@@ -112,7 +99,7 @@ function draw() {
 	let bestBot = null;
 	for(let i = 0; i < POP_SIZE; i++) {
 		const bot = population[i];
-		if(bestBot == null || bot.getFitness() > bestBot.getFitness()) {
+		if(!bestBot || bot.getFitness() > bestBot.getFitness()) {
 			bestBot = bot;
 		}
 	}
@@ -120,30 +107,32 @@ function draw() {
 	// draw the food bots
 	ctx.lineWidth = 2;
 	for(let i = 0; i < POP_SIZE; i++) {
-		// draw body
 		const bot = population[i];
-		const botX = (bot.pos.x + 0.15) * canvas.width / grid.width;
-		const botY = (bot.pos.y + 0.15) * canvas.height / grid.height;
-		const botW = 0.7 * canvas.width / grid.width;
-		const botH = 0.7 * canvas.height / grid.height;
-
-		ctx.strokeStyle = bot == bestBot ? '#00bf00' : '#3f3f3f';
-		ctx.strokeRect(botX, botY, botW, botH);
-
-		// draw eye
-		const cx = botX + botW / 2;
-		const cy = botY + botH / 2;
-		const eyeW = botW / 2;
-		const eyeH = botH / 2;
-		const eyeX = cx - eyeW / 2 + eyeW / 2 * (bot.dir % 2 > 0 ? 0 : 1 - bot.dir);
-		const eyeY = cy - eyeH / 2 + eyeH / 2 * (bot.dir % 2 > 0 ? bot.dir - 2 : 0);
-
-		ctx.fillStyle = !bot.isDead() ? '#ff0000' : '#7f7f7f';
-		ctx.fillRect(eyeX, eyeY, eyeW, eyeH);
+		const color = bot == bestBot ? '#00bf00' : '#3f3f3f';
+		bot.draw(ctx, color);
 	}
 
 	lastDraw = currentDraw;
 	drawId = requestAnimationFrame(draw);
+}
+
+function drawGrid(grid, ctx) {
+	ctx.strokeStyle = '#bfbfbf';
+	ctx.lineWidth = 1;
+	ctx.beginPath();
+
+	// horizontal lines
+	for(let x = 0; x < grid.width; x++) {
+		ctx.moveTo(x / grid.width * canvas.width, 0);
+		ctx.lineTo(x / grid.width * canvas.width, canvas.height);
+	}
+
+	// vertical lines
+	for(let y = 0; y < grid.width; y++) {
+		ctx.moveTo(0 , y / grid.height * canvas.height);
+		ctx.lineTo(canvas.width, y / grid.height * canvas.height);
+	}
+	ctx.stroke();
 }
 
 function tick() {
@@ -163,12 +152,11 @@ function tick() {
 		foodEaten += bot.food;
 	}
 
-	document.getElementById('eaten').textContent = Math.floor(100 * foodEaten / (FOOD_PER_BOT * POP_SIZE)) + '%';
+	const percentEaten = foodEaten / (FOOD_PER_BOT * POP_SIZE);
+	document.getElementById('eaten').textContent = toPercent(percentEaten);
 
 	// generation over
-	if(!genRunning) {
-		generate();
-	}
+	if(!genRunning) generate();
 
 	lastTick = currentTick;
 	tickId = setTimeout(tick, 1000 / TPS);
@@ -184,7 +172,7 @@ function generate() {
 	for(let i = 0; i < POP_SIZE; i++) {
 		const bot = population[i];
 		const botFit = bot.getFitness() / MAX_FIT;
-		if(bestFitBot == null || botFit > bestFit) {
+		if(!bestFitBot || botFit > bestFit) {
 			bestFit = botFit;
 			bestFitBot = bot;
 		}
@@ -193,7 +181,7 @@ function generate() {
 
 	// update stats
 	document.getElementById('food-bot').innerHTML = bestFitBot.toHTML();
-	document.getElementById('fitness').textContent = Math.floor(100 * bestFit) + '%';
+	document.getElementById('fitness').textContent = toPercent(bestFit);
 	document.getElementById('generation').textContent = genCount;
 	foodEaten = 0;
 
@@ -239,4 +227,8 @@ function simulate(chances) {
 		if(rand < chance) return i;
 	}
 	return -1;
+}
+
+function toPercent(x) {
+	return Math.floor(100 * x) + '%';
 }

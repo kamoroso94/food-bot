@@ -7,17 +7,17 @@ const TURN_L = 0,
       NEXT_LT = 6;
 
 export default class FoodBot {
-  constructor(grid) {
+  constructor(foodGrid) {
   	// initiate fields
-    this.grid = grid;
+    this.foodGrid = foodGrid;
   	this.text = [];
   	this.volatility = undefined;
   	this.pc = 0;
   	this.mem = {a: 0, b: 0};
   	this.dir = 0;
   	this.pos = {
-  		x: Math.floor(this.grid.width * Math.random()),
-  		y: Math.floor(this.grid.height * Math.random())
+  		x: Math.floor(this.foodGrid.width * Math.random()),
+  		y: Math.floor(this.foodGrid.height * Math.random())
   	};
   	this.life = FoodBot.LIFETIME;
   	this.food = 0;
@@ -29,6 +29,27 @@ export default class FoodBot {
 			this.text.push(Math.floor(7 * Math.random()));
 		}
 	}
+
+  draw(ctx, color) {
+		const botX = (this.pos.x + 0.15) * ctx.canvas.width / this.grid.width;
+		const botY = (this.pos.y + 0.15) * ctx.canvas.height / this.grid.height;
+		const botW = 0.7 * ctx.canvas.width / this.grid.width;
+		const botH = 0.7 * ctx.canvas.height / this.grid.height;
+
+		ctx.strokeStyle = color;
+		ctx.strokeRect(botX, botY, botW, botH);
+
+		// draw eye
+		const cx = botX + botW / 2;
+		const cy = botY + botH / 2;
+		const eyeW = botW / 2;
+		const eyeH = botH / 2;
+		const eyeX = cx - eyeW / 2 + eyeW / 2 * (this.dir % 2 > 0 ? 0 : 1 - this.dir);
+		const eyeY = cy - eyeH / 2 + eyeH / 2 * (this.dir % 2 > 0 ? this.dir - 2 : 0);
+
+		ctx.fillStyle = !this.isDead() ? '#ff0000' : '#7f7f7f';
+		ctx.fillRect(eyeX, eyeY, eyeW, eyeH);
+  }
 
 	// life of the bot
   run() {
@@ -49,11 +70,11 @@ export default class FoodBot {
 
 			case MOVE_F:
       const [h, k] = moveForward(this.dir);
-			this.pos.x = mod(this.pos.x + h, this.grid.width);
-			this.pos.y = mod(this.pos.y + k, this.grid.height);
-			if(this.grid.get(this.pos.x, this.pos.y)) {
+			this.pos.x = mod(this.pos.x + h, this.foodGrid.width);
+			this.pos.y = mod(this.pos.y + k, this.foodGrid.height);
+			if(this.foodGrid.get(this.pos.x, this.pos.y)) {
 				this.food++;
-				this.grid.set(this.pos.x, this.pos.y, false);
+				this.foodGrid.set(this.pos.x, this.pos.y, false);
 			}
 			break;
 
@@ -108,17 +129,15 @@ export default class FoodBot {
 		let y = this.pos.y;
 		let dist = 0;
 		let found = false;
+    const [h, k] = moveForward(this.dir);
 
 		// look down the bot's line of sight for the closest food
 		do {
-			const h = this.dir % 2 > 0 ? 0 : 1 - this.dir;
-			const k = this.dir % 2 > 0 ? this.dir - 2 : 0;
-
-			x = (x + h) % this.grid.width;
-			y = (y + k) % this.grid.height;
+			x = mod(x + h, this.foodGrid.width);
+			y = mod(y + k, this.foodGrid.height);
 			dist++;
 
-			if(this.grid.get(x, y)) {
+			if(this.foodGrid.get(x, y)) {
 				found = true;
 				break;
 			}
@@ -136,18 +155,15 @@ export default class FoodBot {
 	// reproduction, mixing of genes to produce offspring
 	crossover(bot) {
 		// change to model meiosis
-		const child = new FoodBot(this.grid);
+		const child = new FoodBot(this.foodGrid);
 		const myFit = this.getFitness();
 		const botFit = bot.getFitness();
-		const sum = myFit > 0 || botFit > 0 ? myFit + botFit : 1;
+		const sum = myFit + botFit || 1;
 
 		child.volatility = (this.volatility * myFit + bot.volatility * botFit) / sum;
 		for(let i = 0; i < this.text.length; i++) {
-			if(Math.random() < 0.5) {
-				child.text.push(this.text[i]);
-			} else {
-				child.text.push(bot.text[i]);
-			}
+      const parent = Math.random() < 0.5 ? this : bot;
+			child.text.push(parent.text[i]);
 		}
 		return child;
 	}
@@ -173,15 +189,10 @@ export default class FoodBot {
 			{type: 'jump', name: 'PREV_LT'},
 			{type: 'jump', name: 'NEXT_LT'}
 		];
-		let program = '';
-		for(let i = 0; i < this.text.length; i++) {
-			const command = commands[this.text[i]];
-			program += '<span data-code=\"' + command.type + '\">' + command.name + '</span>';
-			if(i != this.text.length - 1) {
-				program += ', ';
-			}
-		}
-		return program;
+    return this.text
+      .map(x => commands[x])
+      .map(x => `<span data-code="${x.type}">${x.name}</span>`)
+      .join(', ');
 	}
 }
 FoodBot.LIFETIME = 512;
